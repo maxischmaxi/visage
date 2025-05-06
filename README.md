@@ -8,14 +8,13 @@ The goal is to save time and space by only saving the differences between the im
 ```bash
 git clone https://github.com/maxischmaxi/visage.git
 cd visage
-cargo build --release
-echo "export PATH=$PATH:$(pwd)/target/release" >> ~/.bashrc
+go install
 ```
 
 ## Usage
 
 Visage is expecting the project you want to test to be a storybook project.
-You can use the `visage test` command to run the tests.
+You can use the `visage check` command to run the tests.
 
 Visage will start storybook and use a headless browser to take screenshots of the components.
 It automatically detects all stories and takes screenshots of them.
