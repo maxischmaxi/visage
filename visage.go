@@ -108,8 +108,6 @@ func (s *Story) Check(ctx context.Context, config *Config) (*RegressionTestResul
 		strings.ToLower(strings.Join(name, "-")),
 	)
 
-	fmt.Printf("Checking %s %s %s\n", s.ComponentName, s.Name, u.String())
-
 	var screenshot []byte
 	var domHash string
 	var visualHash string
@@ -118,9 +116,12 @@ func (s *Story) Check(ctx context.Context, config *Config) (*RegressionTestResul
 	var style string
 
 	id, _ := strings.CutPrefix(config.RootElement, "#")
-	fmt.Println("ID:", id)
 	htmlQuery := fmt.Sprintf("document.querySelector(\"#%s\").outerHTML", id)
 	cssQuery := "document.styleSheets[0].cssRules[0].cssText"
+
+	fmt.Println("ID:", id)
+	fmt.Println("BASE ID:", config.RootElement)
+	fmt.Println("URL:", u.String())
 	fmt.Println("HTML Query:", htmlQuery)
 	fmt.Println("CSS Query:", cssQuery)
 
@@ -129,12 +130,12 @@ func (s *Story) Check(ctx context.Context, config *Config) (*RegressionTestResul
 		chromedp.WaitVisible(id, chromedp.ByID),
 		chromedp.WaitReady(id, chromedp.ByID),
 		chromedp.Sleep(1 * time.Second),
-		chromedp.Screenshot(id, &screenshot, chromedp.ByID),
+		chromedp.Screenshot("body", &screenshot, chromedp.NodeVisible),
 		chromedp.EvaluateAsDevTools(htmlQuery, &html),
 		chromedp.EvaluateAsDevTools(cssQuery, &style),
 	})
+
 	if err != nil {
-		fmt.Println("Error:", err)
 		return nil, err
 	}
 
@@ -429,7 +430,9 @@ func (c *Config) Check(ctx context.Context, path string) ([]RegressionTestResult
 			defer wg.Done()
 			sem <- struct{}{}
 
-			allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), chromedp.DefaultExecAllocatorOptions[:]...)
+			opts := append(chromedp.DefaultExecAllocatorOptions[:],chromedp.Flag("headless", true), chromedp.WindowSize(1920, 1080))
+
+			allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
 			defer cancel()
 			ctx, cancelCtx := chromedp.NewContext(allocCtx)
 			defer cancelCtx()
